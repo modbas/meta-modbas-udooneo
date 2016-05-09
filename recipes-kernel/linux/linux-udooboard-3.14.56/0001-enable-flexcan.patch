@@ -1,0 +1,51 @@
+From 65162f178a440e41cca669f1ca1a920502f250e6 Mon Sep 17 00:00:00 2001
+From: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
+Date: Fri, 6 May 2016 10:42:26 +0200
+Subject: [PATCH] * enable flexcan
+
+---
+ arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi | 4 ++--
+ arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi           | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
+index 6225aa7..518fdee 100644
+--- a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
++++ b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
+@@ -199,13 +199,13 @@
+ &flexcan1 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_flexcan1>;
+-	status = "disabled";
++	status = "okay";
+ };
+ 
+ &flexcan2 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_flexcan2>;
+-	status = "disabled";
++	status = "okay";
+ };
+ 
+ &spdif {
+diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi
+index 58cbbc8..b985456 100644
+--- a/arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi
++++ b/arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi
+@@ -55,11 +55,11 @@
+ };
+ 
+ &flexcan1 {
+-	status = "disabled";
++	status = "okay";
+ };
+ 
+ &flexcan2 {
+-	status = "disabled";
++	status = "okay";
+ };
+ 
+ /*&i2c2 {
+-- 
+1.9.1
+
