@@ -1,0 +1,25 @@
+From f3fbf8ec9578d2f8f1c51ada702277639d65647f Mon Sep 17 00:00:00 2001
+From: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
+Date: Sun, 14 Feb 2016 10:27:19 +0100
+Subject: [PATCH] imx sema5 wait queue
+
+---
+ include/linux/imx_sema4.h | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/linux/imx_sema4.h b/include/linux/imx_sema4.h
+index 9787980..3586199 100644
+--- a/include/linux/imx_sema4.h
++++ b/include/linux/imx_sema4.h
+@@ -9,6 +9,8 @@
+ #ifndef __LINUX_IMX_SEMA4_H__
+ #define __LINUX_IMX_SEMA4_H__
+ 
++#include <linux/wait.h>
++
+ #define SEMA4_NUM_DEVICES	1
+ #define SEMA4_NUM_GATES		16
+ 
+-- 
+1.9.1
+
