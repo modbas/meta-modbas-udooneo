@@ -13,5 +13,5 @@ Yocto meta layer for [Udoo Neo](http://www.udoo.org/udoo-neo/)
 2. Add `BBLAYERS += " ${BSPDIR}/sources/meta-modbas-udooneo "`
 to `build/conf/bblayers.conf`
 3. Replace `build/conf/local.conf` by `build.conf/local.conf` 
-4. `. ./setup_enviroment build`
+4. `MACHINE=udooneo . ./setup_enviroment build`
 5. `bitbake core-image-base`
