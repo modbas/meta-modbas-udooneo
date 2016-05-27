@@ -1,17 +1,46 @@
-From 205d2f0e99a28f897372029fa7f2454551dd515f Mon Sep 17 00:00:00 2001
+From 786be9c57e2e23f9e555fb51dc52904a5e9fd309 Mon Sep 17 00:00:00 2001
 From: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
-Date: Sun, 15 May 2016 08:24:34 +0200
+Date: Fri, 27 May 2016 13:16:33 +0200
 Subject: [PATCH] * enable flexcan
 
 ---
- arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi | 14 +++++++-------
+ arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi           |  7 -------
+ 2 files changed, 7 insertions(+), 14 deletions(-)
 
 diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
-index 6225aa7..518fdee 100644
+index 6225aa7..585917e 100644
 --- a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
 +++ b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
-@@ -199,13 +199,13 @@
+@@ -33,21 +33,21 @@
+ 				MX6SX_PAD_CSI_DATA06__GPIO1_IO_20		0x80000000	// {{external-gpio-32}}
+ 				MX6SX_PAD_CSI_DATA07__GPIO1_IO_21		0x80000000	// {{external-gpio-33}}
+ 				
+-				//MX6SX_PAD_USB_H_STROBE__GPIO7_IO_11	0x80000000	// {{external-gpio-34}}
+-				//MX6SX_PAD_USB_H_DATA__GPIO7_IO_10		0x80000000	// {{external-gpio-35}}
++//				MX6SX_PAD_USB_H_STROBE__GPIO7_IO_11	0x80000000	// {{external-gpio-34}}
++//				MX6SX_PAD_USB_H_DATA__GPIO7_IO_10		0x80000000	// {{external-gpio-35}}
+ 				MX6SX_PAD_SD4_DATA3__GPIO6_IO_17		0x80000000	// {{external-gpio-36}}
+ 				MX6SX_PAD_SD4_DATA2__GPIO6_IO_16		0x80000000	// {{external-gpio-37}}
+ 				MX6SX_PAD_SD4_DATA1__GPIO6_IO_15		0x80000000	// {{external-gpio-38}}
+ 				MX6SX_PAD_SD4_DATA0__GPIO6_IO_14		0x80000000	// {{external-gpio-39}}
+ 				
+-				MX6SX_PAD_QSPI1A_SS1_B__GPIO4_IO_23		0x80000000	// {{external-gpio-40}}
+-				MX6SX_PAD_QSPI1B_DQS__GPIO4_IO_28		0x80000000	// {{external-gpio-41}}
++//				MX6SX_PAD_QSPI1A_SS1_B__GPIO4_IO_23		0x80000000	// {{external-gpio-40}}
++//				MX6SX_PAD_QSPI1B_DQS__GPIO4_IO_28		0x80000000	// {{external-gpio-41}}
+ 				MX6SX_PAD_QSPI1B_SS1_B__GPIO4_IO_31		0x80000000	// {{external-gpio-42}}
+ 				MX6SX_PAD_QSPI1A_DQS__GPIO4_IO_20		0x80000000	// {{external-gpio-43}}
+ 				MX6SX_PAD_GPIO1_IO07__GPIO1_IO_7		0x80000000	// {{external-gpio-44}}
+ 				MX6SX_PAD_GPIO1_IO06__GPIO1_IO_6		0x80000000	// {{external-gpio-45}}
+-				//MX6SX_PAD_GPIO1_IO05__GPIO1_IO_5		0x80000000	// {{external-gpio-46}}
+-				//MX6SX_PAD_GPIO1_IO04__GPIO1_IO_4		0x80000000	// {{external-gpio-47}}
++//				MX6SX_PAD_GPIO1_IO05__GPIO1_IO_5		0x80000000	// {{external-gpio-46}}
++//				MX6SX_PAD_GPIO1_IO04__GPIO1_IO_4		0x80000000	// {{external-gpio-47}}
+ 			>;
+ 		};
+ 
+@@ -199,7 +199,7 @@
  &flexcan1 {
  	pinctrl-names = "default";
  	pinctrl-0 = <&pinctrl_flexcan1>;
@@ -20,13 +49,24 @@ index 6225aa7..518fdee 100644
  };
  
  &flexcan2 {
- 	pinctrl-names = "default";
- 	pinctrl-0 = <&pinctrl_flexcan2>;
--	status = "disabled";
-+	status = "okay";
+diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi
+index 58cbbc8..21fbfa9 100644
+--- a/arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi
++++ b/arch/arm/boot/dts/imx6sx-udoo-neo-m4.dtsi
+@@ -54,13 +54,6 @@
+ 	status = "disabled";
  };
  
- &spdif {
+-&flexcan1 {
+-	status = "disabled";
+-};
+-
+-&flexcan2 {
+-	status = "disabled";
+-};
+ 
+ /*&i2c2 {
+ 	status = "disabled";
 -- 
 1.9.1
 
