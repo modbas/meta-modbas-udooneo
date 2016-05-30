@@ -11,3 +11,11 @@ S = "${WORKDIR}/libgtrt-1.0"
 DEPENDS = "glib-2.0 pkgconfig"
 
 inherit autotools
+
+do_install() {
+    autotools_do_install
+    mkdir -p ${D}/home/root/bin
+    install -m 0755 ${S}/debian/bin/*.sh ${D}/home/root/bin
+}
+
+FILES_${PN} += "/home/root/bin/*"
