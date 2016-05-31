@@ -8,7 +8,7 @@ SRC_URI = "file://libgtrt-1.0.tgz \
 
 S = "${WORKDIR}/libgtrt-1.0"
 
-DEPENDS = "glib-2.0 pkgconfig"
+DEPENDS = "glib-2.0 pkgconfig apache2"
 
 inherit autotools
 
@@ -16,6 +16,9 @@ do_install() {
     autotools_do_install
     mkdir -p ${D}/home/root/bin
     install -m 0755 ${S}/debian/bin/*.sh ${D}/home/root/bin
+    mkdir -p ${D}/usr/share/apache2/htdocs/gtrtmonitor
+    install -m 0644 ${S}/debian/var/www/gtrtmonitor/* ${D}/usr/share/apache2/htdocs/gtrtmonitor
 }
 
 FILES_${PN} += "/home/root/bin/*"
+FILES_${PN} += "/usr/share/apache2/htdocs/gtrtmonitor/*"
