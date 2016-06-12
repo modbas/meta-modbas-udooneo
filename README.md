@@ -6,7 +6,9 @@ Yocto meta layer for [Udoo Neo](http://www.udoo.org/udoo-neo/)
 
 ## Features
 * Linux [RT preempt patch](https://rt.wiki.kernel.org/index.php/Main_Page)
-* CAN bus support (FlexCAN) on ARM-Cortex-A9 of Udoo Neo 
+* CAN bus support (FlexCAN) on ARM-Cortex-A9 of Udoo Neo
+* MATLAB/Simulink(R) code generation and real-time execution on Linux RT-Preempt
+* Contact frank.traenkle(at)hs-heilbronn.de for further information
 
 ## Configuration and Build
 1. Follow the lines of [https://github.com/graugans/fsl-community-bsp-platform](https://github.com/graugans/fsl-community-bsp-platform)
