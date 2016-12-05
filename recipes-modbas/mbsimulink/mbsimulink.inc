@@ -1,6 +1,6 @@
 SUMMARY = "MODBAS RT-Linux Simulink"
 LICENSE = "LGPLv3"
-LIC_FILES_CHKSUM = "file://COPYING;md5=e6a600fd5e1d9cbde2d983680233ad02"
+LIC_FILES_CHKSUM = "file://COPYING;md5=b8441250b754b867da07fbb8295da0f8"
 
 SRC_URI = "file://libmbrt-1.0.tgz \
            file://COPYING \
