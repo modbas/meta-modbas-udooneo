@@ -1,0 +1,274 @@
+From f63349c3559d2b8905122f1107f4fd789a0c42df Mon Sep 17 00:00:00 2001
+From: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
+Date: Fri, 16 Dec 2016 17:24:09 +0100
+Subject: [PATCH] * st core rt preempt
+
+Signed-off-by: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
+---
+ drivers/misc/ti-st/st_core.c | 60 ++++++++++++++++++++++----------------------
+ include/linux/ti_wilink_st.h |  2 +-
+ 2 files changed, 31 insertions(+), 31 deletions(-)
+
+diff --git a/drivers/misc/ti-st/st_core.c b/drivers/misc/ti-st/st_core.c
+index fa0b8c4..d55e024 100644
+--- a/drivers/misc/ti-st/st_core.c
++++ b/drivers/misc/ti-st/st_core.c
+@@ -212,7 +212,7 @@ static inline void st_wakeup_ack(struct st_data_s *st_gdata,
+ 	struct sk_buff *waiting_skb;
+ 	unsigned long flags = 0;
+ 
+-	spin_lock_irqsave(&st_gdata->lock, flags);
++	raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 	/* de-Q from waitQ and Q in txQ now that the
+ 	 * chip is awake
+ 	 */
+@@ -221,7 +221,7 @@ static inline void st_wakeup_ack(struct st_data_s *st_gdata,
+ 
+ 	/* state forwarded to ST LL */
+ 	st_ll_sleep_state(st_gdata, (unsigned long)cmd);
+-	spin_unlock_irqrestore(&st_gdata->lock, flags);
++	raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 
+ 	/* wake up to send the recently copied skbs from waitQ */
+ 	st_tx_wakeup(st_gdata);
+@@ -258,7 +258,7 @@ void st_int_recv(void *disc_data,
+ 		   "rx_count %ld", count, st_gdata->rx_state,
+ 		   st_gdata->rx_count);
+ 
+-	spin_lock_irqsave(&st_gdata->lock, flags);
++	raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 	/* Decode received bytes here */
+ 	while (count) {
+ 		if (st_gdata->rx_count) {
+@@ -322,10 +322,10 @@ void st_int_recv(void *disc_data,
+ 			/* if WAKEUP_IND collides copy from waitq to txq
+ 			 * and assume chip awake
+ 			 */
+-			spin_unlock_irqrestore(&st_gdata->lock, flags);
++			raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 			if (st_ll_getstate(st_gdata) == ST_LL_AWAKE)
+ 				st_wakeup_ack(st_gdata, LL_WAKE_UP_ACK);
+-			spin_lock_irqsave(&st_gdata->lock, flags);
++			raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 
+ 			ptr++;
+ 			count--;
+@@ -333,10 +333,10 @@ void st_int_recv(void *disc_data,
+ 		case LL_WAKE_UP_ACK:
+ 			pr_debug("PM packet");
+ 
+-			spin_unlock_irqrestore(&st_gdata->lock, flags);
++			raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 			/* wake up ack received */
+ 			st_wakeup_ack(st_gdata, *ptr);
+-			spin_lock_irqsave(&st_gdata->lock, flags);
++			raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 
+ 			ptr++;
+ 			count--;
+@@ -386,7 +386,7 @@ void st_int_recv(void *disc_data,
+ 		count--;
+ 	}
+ done:
+-	spin_unlock_irqrestore(&st_gdata->lock, flags);
++	raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 	pr_debug("done %s", __func__);
+ 	return;
+ }
+@@ -424,7 +424,7 @@ static void st_int_enqueue(struct st_data_s *st_gdata, struct sk_buff *skb)
+ 	unsigned long flags = 0;
+ 
+ 	pr_debug("%s", __func__);
+-	spin_lock_irqsave(&st_gdata->lock, flags);
++	raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 
+ 	switch (st_ll_getstate(st_gdata)) {
+ 	case ST_LL_AWAKE:
+@@ -450,7 +450,7 @@ static void st_int_enqueue(struct st_data_s *st_gdata, struct sk_buff *skb)
+ 		break;
+ 	}
+ 
+-	spin_unlock_irqrestore(&st_gdata->lock, flags);
++	raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 	pr_debug("done %s", __func__);
+ 	return;
+ }
+@@ -481,7 +481,7 @@ void st_tx_wakeup(struct st_data_s *st_data)
+ 		clear_bit(ST_TX_WAKEUP, &st_data->tx_state);
+ 		while ((skb = st_int_dequeue(st_data))) {
+ 			int len;
+-			spin_lock_irqsave(&st_data->lock, flags);
++			raw_spin_lock_irqsave(&st_data->lock, flags);
+ 			/* enable wake-up from TTY */
+ 			set_bit(TTY_DO_WRITE_WAKEUP, &st_data->tty->flags);
+ 			len = st_int_write(st_data, skb->data, skb->len);
+@@ -490,11 +490,11 @@ void st_tx_wakeup(struct st_data_s *st_data)
+ 			if (skb->len) {
+ 				/* would be the next skb to be sent */
+ 				st_data->tx_skb = skb;
+-				spin_unlock_irqrestore(&st_data->lock, flags);
++				raw_spin_unlock_irqrestore(&st_data->lock, flags);
+ 				break;
+ 			}
+ 			kfree_skb(skb);
+-			spin_unlock_irqrestore(&st_data->lock, flags);
++			raw_spin_unlock_irqrestore(&st_data->lock, flags);
+ 		}
+ 		/* if wake-up is set in another context- restart sending */
+ 	} while (test_bit(ST_TX_WAKEUP, &st_data->tx_state));
+@@ -544,7 +544,7 @@ long st_register(struct st_proto_s *new_proto)
+ 	}
+ 
+ 	/* can be from process context only */
+-	spin_lock_irqsave(&st_gdata->lock, flags);
++	raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 
+ 	if (test_bit(ST_REG_IN_PROGRESS, &st_gdata->st_state)) {
+ 		pr_info(" ST_REG_IN_PROGRESS:%d ", new_proto->chnl_id);
+@@ -555,7 +555,7 @@ long st_register(struct st_proto_s *new_proto)
+ 		new_proto->write = st_write;
+ 
+ 		set_bit(ST_REG_PENDING, &st_gdata->st_state);
+-		spin_unlock_irqrestore(&st_gdata->lock, flags);
++		raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 		return -EINPROGRESS;
+ 	} else if (st_gdata->protos_registered == ST_EMPTY) {
+ 		pr_info(" chnl_id list empty :%d ", new_proto->chnl_id);
+@@ -566,7 +566,7 @@ long st_register(struct st_proto_s *new_proto)
+ 		st_ll_enable(st_gdata);
+ 
+ 		/* release lock previously held - re-locked below */
+-		spin_unlock_irqrestore(&st_gdata->lock, flags);
++		raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 
+ 		/* this may take a while to complete
+ 		 * since it involves BT fw download
+@@ -577,15 +577,15 @@ long st_register(struct st_proto_s *new_proto)
+ 			if ((st_gdata->protos_registered != ST_EMPTY) &&
+ 			    (test_bit(ST_REG_PENDING, &st_gdata->st_state))) {
+ 				pr_err(" KIM failure complete callback ");
+-				spin_lock_irqsave(&st_gdata->lock, flags);
++				raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 				st_reg_complete(st_gdata, err);
+-				spin_unlock_irqrestore(&st_gdata->lock, flags);
++				raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 				clear_bit(ST_REG_PENDING, &st_gdata->st_state);
+ 			}
+ 			return -EINVAL;
+ 		}
+ 
+-		spin_lock_irqsave(&st_gdata->lock, flags);
++		raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 
+ 		clear_bit(ST_REG_IN_PROGRESS, &st_gdata->st_state);
+ 		st_recv = st_int_recv;
+@@ -606,14 +606,14 @@ long st_register(struct st_proto_s *new_proto)
+ 		if (st_gdata->is_registered[new_proto->chnl_id] == true) {
+ 			pr_err(" proto %d already registered ",
+ 				   new_proto->chnl_id);
+-			spin_unlock_irqrestore(&st_gdata->lock, flags);
++			raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 			return -EALREADY;
+ 		}
+ 
+ 		add_channel_to_table(st_gdata, new_proto);
+ 		st_gdata->protos_registered++;
+ 		new_proto->write = st_write;
+-		spin_unlock_irqrestore(&st_gdata->lock, flags);
++		raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 		return err;
+ 	}
+ 	/* if fw is already downloaded & new stack registers protocol */
+@@ -623,7 +623,7 @@ long st_register(struct st_proto_s *new_proto)
+ 		new_proto->write = st_write;
+ 
+ 		/* lock already held before entering else */
+-		spin_unlock_irqrestore(&st_gdata->lock, flags);
++		raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 		return err;
+ 	}
+ 	pr_debug("done %s(%d) ", __func__, new_proto->chnl_id);
+@@ -647,11 +647,11 @@ long st_unregister(struct st_proto_s *proto)
+ 		return -EPROTONOSUPPORT;
+ 	}
+ 
+-	spin_lock_irqsave(&st_gdata->lock, flags);
++	raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 
+ 	if (st_gdata->is_registered[proto->chnl_id] == false) {
+ 		pr_err(" chnl_id %d not registered", proto->chnl_id);
+-		spin_unlock_irqrestore(&st_gdata->lock, flags);
++		raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 		return -EPROTONOSUPPORT;
+ 	}
+ 
+@@ -659,7 +659,7 @@ long st_unregister(struct st_proto_s *proto)
+ 		st_gdata->protos_registered--;
+ 
+ 	remove_channel_from_table(st_gdata, proto);
+-	spin_unlock_irqrestore(&st_gdata->lock, flags);
++	raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 
+ 	if ((st_gdata->protos_registered == ST_EMPTY) &&
+ 	    (!test_bit(ST_REG_PENDING, &st_gdata->st_state))) {
+@@ -754,7 +754,7 @@ static void st_tty_close(struct tty_struct *tty)
+ 	 * if a protocol has been registered & line discipline
+ 	 * un-installed for some reason - what should be done ?
+ 	 */
+-	spin_lock_irqsave(&st_gdata->lock, flags);
++	raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 	for (i = ST_BT; i < ST_MAX_CHANNELS; i++) {
+ 		if (st_gdata->is_registered[i] == true)
+ 			pr_err("%d not un-registered", i);
+@@ -762,7 +762,7 @@ static void st_tty_close(struct tty_struct *tty)
+ 		st_gdata->is_registered[i] = false;
+ 	}
+ 	st_gdata->protos_registered = 0;
+-	spin_unlock_irqrestore(&st_gdata->lock, flags);
++	raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 	/*
+ 	 * signal to UIM via KIM that -
+ 	 * N_TI_WL ldisc is un-installed
+@@ -773,7 +773,7 @@ static void st_tty_close(struct tty_struct *tty)
+ 	tty_ldisc_flush(tty);
+ 	tty_driver_flush_buffer(tty);
+ 
+-	spin_lock_irqsave(&st_gdata->lock, flags);
++	raw_spin_lock_irqsave(&st_gdata->lock, flags);
+ 	/* empty out txq and tx_waitq */
+ 	skb_queue_purge(&st_gdata->txq);
+ 	skb_queue_purge(&st_gdata->tx_waitq);
+@@ -782,7 +782,7 @@ static void st_tty_close(struct tty_struct *tty)
+ 	st_gdata->rx_state = ST_W4_PACKET_TYPE;
+ 	kfree_skb(st_gdata->rx_skb);
+ 	st_gdata->rx_skb = NULL;
+-	spin_unlock_irqrestore(&st_gdata->lock, flags);
++	raw_spin_unlock_irqrestore(&st_gdata->lock, flags);
+ 
+ 	pr_debug("%s: done ", __func__);
+ }
+@@ -871,7 +871,7 @@ int st_core_init(struct st_data_s **core_data)
+ 	skb_queue_head_init(&st_gdata->tx_waitq);
+ 
+ 	/* Locking used in st_int_enqueue() to avoid multiple execution */
+-	spin_lock_init(&st_gdata->lock);
++	raw_spin_lock_init(&st_gdata->lock);
+ 
+ 	err = st_ll_init(st_gdata);
+ 	if (err) {
+diff --git a/include/linux/ti_wilink_st.h b/include/linux/ti_wilink_st.h
+index 39e577c..b7bd20be 100644
+--- a/include/linux/ti_wilink_st.h
++++ b/include/linux/ti_wilink_st.h
+@@ -154,7 +154,7 @@ struct st_data_s {
+ 	struct sk_buff *rx_skb;
+ 	unsigned char rx_chnl;
+ 	struct sk_buff_head txq, tx_waitq;
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 	unsigned char	protos_registered;
+ 	unsigned long ll_state;
+ 	void *kim_data;
+-- 
+1.9.1
+
