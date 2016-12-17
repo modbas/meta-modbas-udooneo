@@ -1,13 +1,18 @@
-From f63349c3559d2b8905122f1107f4fd789a0c42df Mon Sep 17 00:00:00 2001
+From d8eacce7c3676ce1303e5e425db69224a62cb523 Mon Sep 17 00:00:00 2001
 From: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
-Date: Fri, 16 Dec 2016 17:24:09 +0100
+Date: Fri, 16 Dec 2016 19:55:08 +0100
 Subject: [PATCH] * st core rt preempt
 
 Signed-off-by: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
 ---
- drivers/misc/ti-st/st_core.c | 60 ++++++++++++++++++++++----------------------
- include/linux/ti_wilink_st.h |  2 +-
- 2 files changed, 31 insertions(+), 31 deletions(-)
+ drivers/misc/ti-st/st_core.c            | 60 ++++++++++++++++-----------------
+ drivers/net/wireless/ti/wlcore/cmd.c    |  8 ++---
+ drivers/net/wireless/ti/wlcore/main.c   | 33 +++++++++---------
+ drivers/net/wireless/ti/wlcore/ps.c     | 12 +++----
+ drivers/net/wireless/ti/wlcore/tx.c     | 40 +++++++++++-----------
+ drivers/net/wireless/ti/wlcore/wlcore.h |  2 +-
+ include/linux/ti_wilink_st.h            |  2 +-
+ 7 files changed, 78 insertions(+), 79 deletions(-)
 
 diff --git a/drivers/misc/ti-st/st_core.c b/drivers/misc/ti-st/st_core.c
 index fa0b8c4..d55e024 100644
@@ -256,6 +261,388 @@ index fa0b8c4..d55e024 100644
  
  	err = st_ll_init(st_gdata);
  	if (err) {
+diff --git a/drivers/net/wireless/ti/wlcore/cmd.c b/drivers/net/wireless/ti/wlcore/cmd.c
+index 9b2ecf5..1ab61e3 100644
+--- a/drivers/net/wireless/ti/wlcore/cmd.c
++++ b/drivers/net/wireless/ti/wlcore/cmd.c
+@@ -319,10 +319,10 @@ int wl12xx_allocate_link(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 *hlid)
+ 	wl->session_ids[link] = wlcore_get_new_session_id(wl, link);
+ 
+ 	/* these bits are used by op_tx */
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	__set_bit(link, wl->links_map);
+ 	__set_bit(link, wlvif->links_map);
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	/* take the last "freed packets" value from the current FW status */
+ 	wl->links[link].prev_freed_pkts =
+@@ -350,10 +350,10 @@ void wl12xx_free_link(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 *hlid)
+ 		return;
+ 
+ 	/* these bits are used by op_tx */
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	__clear_bit(*hlid, wl->links_map);
+ 	__clear_bit(*hlid, wlvif->links_map);
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	wl->links[*hlid].allocated_pkts = 0;
+ 	wl->links[*hlid].prev_freed_pkts = 0;
+diff --git a/drivers/net/wireless/ti/wlcore/main.c b/drivers/net/wireless/ti/wlcore/main.c
+index b46b311..9ae9f95 100644
+--- a/drivers/net/wireless/ti/wlcore/main.c
++++ b/drivers/net/wireless/ti/wlcore/main.c
+@@ -1,4 +1,3 @@
+-
+ /*
+  * This file is part of wlcore
+  *
+@@ -589,10 +588,10 @@ static int wlcore_irq_locked(struct wl1271 *wl)
+ 				goto out;
+ 
+ 			/* Check if any tx blocks were freed */
+-			spin_lock_irqsave(&wl->wl_lock, flags);
++			raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 			if (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags) &&
+ 			    wl1271_tx_total_queue_count(wl) > 0) {
+-				spin_unlock_irqrestore(&wl->wl_lock, flags);
++				raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 				/*
+ 				 * In order to avoid starvation of the TX path,
+ 				 * call the work function directly.
+@@ -601,7 +600,7 @@ static int wlcore_irq_locked(struct wl1271 *wl)
+ 				if (ret < 0)
+ 					goto out;
+ 			} else {
+-				spin_unlock_irqrestore(&wl->wl_lock, flags);
++				raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 			}
+ 
+ 			/* check for tx results */
+@@ -651,7 +650,7 @@ static irqreturn_t wlcore_irq(int irq, void *cookie)
+ 	struct wl1271 *wl = cookie;
+ 
+ 	/* complete the ELP completion */
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	set_bit(WL1271_FLAG_IRQ_RUNNING, &wl->flags);
+ 	if (wl->elp_compl) {
+ 		complete(wl->elp_compl);
+@@ -664,10 +663,10 @@ static irqreturn_t wlcore_irq(int irq, void *cookie)
+ 		wl1271_debug(DEBUG_IRQ, "should not enqueue work");
+ 		disable_irq_nosync(wl->irq);
+ 		pm_wakeup_event(wl->dev, 0);
+-		spin_unlock_irqrestore(&wl->wl_lock, flags);
++		raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 		return IRQ_HANDLED;
+ 	}
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	/* TX might be handled here, avoid redundant work */
+ 	set_bit(WL1271_FLAG_TX_PENDING, &wl->flags);
+@@ -679,13 +678,13 @@ static irqreturn_t wlcore_irq(int irq, void *cookie)
+ 	if (ret)
+ 		wl12xx_queue_recovery_work(wl);
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	/* In case TX was not handled here, queue TX work */
+ 	clear_bit(WL1271_FLAG_TX_PENDING, &wl->flags);
+ 	if (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags) &&
+ 	    wl1271_tx_total_queue_count(wl) > 0)
+ 		ieee80211_queue_work(wl->hw, &wl->tx_work);
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	mutex_unlock(&wl->mutex);
+ 
+@@ -1217,7 +1216,7 @@ static void wl1271_op_tx(struct ieee80211_hw *hw,
+ 
+ 	hlid = wl12xx_tx_get_hlid(wl, wlvif, skb, control->sta);
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 
+ 	/*
+ 	 * drop the packet if the link is invalid or the queue is stopped
+@@ -1263,7 +1262,7 @@ static void wl1271_op_tx(struct ieee80211_hw *hw,
+ 		ieee80211_queue_work(wl->hw, &wl->tx_work);
+ 
+ out:
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ }
+ 
+ int wl1271_tx_dummy_packet(struct wl1271 *wl)
+@@ -1277,10 +1276,10 @@ int wl1271_tx_dummy_packet(struct wl1271 *wl)
+ 
+ 	q = wl1271_tx_get_queue(skb_get_queue_mapping(wl->dummy_packet));
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	set_bit(WL1271_FLAG_DUMMY_PACKET_PENDING, &wl->flags);
+ 	wl->tx_queue_count[q]++;
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	/* The FW is low on RX memory blocks, so send the dummy packet asap */
+ 	if (!test_bit(WL1271_FLAG_FW_TX_BUSY, &wl->flags))
+@@ -1759,7 +1758,7 @@ static int wl1271_op_suspend(struct ieee80211_hw *hw,
+ 
+ 	/*
+ 	 * set suspended flag to avoid triggering a new threaded_irq
+-	 * work. no need for spinlock as interrupts are disabled.
++	 * work. no need for raw_spinlock as interrupts are disabled.
+ 	 */
+ 	set_bit(WL1271_FLAG_SUSPENDED, &wl->flags);
+ 
+@@ -1786,11 +1785,11 @@ static int wl1271_op_resume(struct ieee80211_hw *hw)
+ 	 * re-enable irq_work enqueuing, and call irq_work directly if
+ 	 * there is a pending work.
+ 	 */
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	clear_bit(WL1271_FLAG_SUSPENDED, &wl->flags);
+ 	if (test_and_clear_bit(WL1271_FLAG_PENDING_WORK, &wl->flags))
+ 		run_irq_work = true;
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	mutex_lock(&wl->mutex);
+ 
+@@ -5915,7 +5914,7 @@ struct ieee80211_hw *wlcore_alloc_hw(size_t priv_size, u32 aggr_buf_size,
+ 	for (i = 0; i < wl->num_tx_desc; i++)
+ 		wl->tx_frames[i] = NULL;
+ 
+-	spin_lock_init(&wl->wl_lock);
++	raw_spin_lock_init(&wl->wl_lock);
+ 
+ 	wl->state = WLCORE_STATE_OFF;
+ 	wl->fw_type = WL12XX_FW_TYPE_NONE;
+diff --git a/drivers/net/wireless/ti/wlcore/ps.c b/drivers/net/wireless/ti/wlcore/ps.c
+index 26bfc36..725bba5 100644
+--- a/drivers/net/wireless/ti/wlcore/ps.c
++++ b/drivers/net/wireless/ti/wlcore/ps.c
+@@ -136,12 +136,12 @@ int wl1271_ps_elp_wakeup(struct wl1271 *wl)
+ 	 * The spinlock is required here to synchronize both the work and
+ 	 * the completion variable in one entity.
+ 	 */
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	if (test_bit(WL1271_FLAG_IRQ_RUNNING, &wl->flags))
+ 		pending = true;
+ 	else
+ 		wl->elp_compl = &compl;
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	ret = wlcore_raw_write32(wl, HW_ACCESS_ELP_CTRL_REG, ELPCTRL_WAKE_UP);
+ 	if (ret < 0) {
+@@ -167,9 +167,9 @@ int wl1271_ps_elp_wakeup(struct wl1271 *wl)
+ 	goto out;
+ 
+ err:
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	wl->elp_compl = NULL;
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 	return ret;
+ 
+ out:
+@@ -263,13 +263,13 @@ static void wl1271_ps_filter_frames(struct wl1271 *wl, u8 hlid)
+ 		}
+ 	}
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	for (i = 0; i < NUM_TX_QUEUES; i++) {
+ 		wl->tx_queue_count[i] -= filtered[i];
+ 		if (lnk->wlvif)
+ 			lnk->wlvif->tx_queue_count[i] -= filtered[i];
+ 	}
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	wl1271_handle_tx_low_watermark(wl);
+ }
+diff --git a/drivers/net/wireless/ti/wlcore/tx.c b/drivers/net/wireless/ti/wlcore/tx.c
+index 87cd707..2839e12 100644
+--- a/drivers/net/wireless/ti/wlcore/tx.c
++++ b/drivers/net/wireless/ti/wlcore/tx.c
+@@ -519,14 +519,14 @@ static struct sk_buff *wlcore_lnk_dequeue(struct wl1271 *wl,
+ 
+ 	skb = skb_dequeue(&lnk->tx_queue[q]);
+ 	if (skb) {
+-		spin_lock_irqsave(&wl->wl_lock, flags);
++		raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 		WARN_ON_ONCE(wl->tx_queue_count[q] <= 0);
+ 		wl->tx_queue_count[q]--;
+ 		if (lnk->wlvif) {
+ 			WARN_ON_ONCE(lnk->wlvif->tx_queue_count[q] <= 0);
+ 			lnk->wlvif->tx_queue_count[q]--;
+ 		}
+-		spin_unlock_irqrestore(&wl->wl_lock, flags);
++		raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 	}
+ 
+ 	return skb;
+@@ -667,10 +667,10 @@ out:
+ 		skb = wl->dummy_packet;
+ 		*hlid = wl->system_hlid;
+ 		q = wl1271_tx_get_queue(skb_get_queue_mapping(skb));
+-		spin_lock_irqsave(&wl->wl_lock, flags);
++		raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 		WARN_ON_ONCE(wl->tx_queue_count[q] <= 0);
+ 		wl->tx_queue_count[q]--;
+-		spin_unlock_irqrestore(&wl->wl_lock, flags);
++		raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 	}
+ 
+ 	return skb;
+@@ -692,11 +692,11 @@ static void wl1271_skb_queue_head(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+ 				      WL12XX_MAX_LINKS;
+ 	}
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	wl->tx_queue_count[q]++;
+ 	if (wlvif)
+ 		wlvif->tx_queue_count[q]++;
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ }
+ 
+ static bool wl1271_tx_is_data_present(struct sk_buff *skb)
+@@ -1044,13 +1044,13 @@ void wl1271_tx_reset_link_queues(struct wl1271 *wl, u8 hlid)
+ 		}
+ 	}
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	for (i = 0; i < NUM_TX_QUEUES; i++) {
+ 		wl->tx_queue_count[i] -= total[i];
+ 		if (lnk->wlvif)
+ 			lnk->wlvif->tx_queue_count[i] -= total[i];
+ 	}
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	wl1271_handle_tx_low_watermark(wl);
+ }
+@@ -1218,9 +1218,9 @@ void wlcore_stop_queue(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 queue,
+ {
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	wlcore_stop_queue_locked(wl, wlvif, queue, reason);
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ }
+ 
+ void wlcore_wake_queue(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 queue,
+@@ -1229,7 +1229,7 @@ void wlcore_wake_queue(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 queue,
+ 	unsigned long flags;
+ 	int hwq = wlcore_tx_get_mac80211_queue(wlvif, queue);
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 
+ 	/* queue should not be clear for this reason */
+ 	WARN_ON_ONCE(!test_and_clear_bit(reason, &wl->queue_stop_reasons[hwq]));
+@@ -1240,7 +1240,7 @@ void wlcore_wake_queue(struct wl1271 *wl, struct wl12xx_vif *wlvif, u8 queue,
+ 	ieee80211_wake_queue(wl->hw, hwq);
+ 
+ out:
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ }
+ 
+ void wlcore_stop_queues(struct wl1271 *wl,
+@@ -1249,7 +1249,7 @@ void wlcore_stop_queues(struct wl1271 *wl,
+ 	int i;
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 
+ 	/* mark all possible queues as stopped */
+         for (i = 0; i < WLCORE_NUM_MAC_ADDRESSES * NUM_TX_QUEUES; i++)
+@@ -1261,7 +1261,7 @@ void wlcore_stop_queues(struct wl1271 *wl,
+ 	 */
+ 	ieee80211_stop_queues(wl->hw);
+ 
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ }
+ 
+ void wlcore_wake_queues(struct wl1271 *wl,
+@@ -1270,7 +1270,7 @@ void wlcore_wake_queues(struct wl1271 *wl,
+ 	int i;
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 
+ 	/* mark all possible queues as awake */
+         for (i = 0; i < WLCORE_NUM_MAC_ADDRESSES * NUM_TX_QUEUES; i++)
+@@ -1282,7 +1282,7 @@ void wlcore_wake_queues(struct wl1271 *wl,
+ 	 */
+ 	ieee80211_wake_queues(wl->hw);
+ 
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ }
+ 
+ bool wlcore_is_queue_stopped_by_reason(struct wl1271 *wl,
+@@ -1292,10 +1292,10 @@ bool wlcore_is_queue_stopped_by_reason(struct wl1271 *wl,
+ 	unsigned long flags;
+ 	bool stopped;
+ 
+-	spin_lock_irqsave(&wl->wl_lock, flags);
++	raw_spin_lock_irqsave(&wl->wl_lock, flags);
+ 	stopped = wlcore_is_queue_stopped_by_reason_locked(wl, wlvif, queue,
+ 							   reason);
+-	spin_unlock_irqrestore(&wl->wl_lock, flags);
++	raw_spin_unlock_irqrestore(&wl->wl_lock, flags);
+ 
+ 	return stopped;
+ }
+@@ -1306,7 +1306,7 @@ bool wlcore_is_queue_stopped_by_reason_locked(struct wl1271 *wl,
+ {
+ 	int hwq = wlcore_tx_get_mac80211_queue(wlvif, queue);
+ 
+-	assert_spin_locked(&wl->wl_lock);
++	assert_raw_spin_locked(&wl->wl_lock);
+ 	return test_bit(reason, &wl->queue_stop_reasons[hwq]);
+ }
+ 
+@@ -1315,6 +1315,6 @@ bool wlcore_is_queue_stopped_locked(struct wl1271 *wl, struct wl12xx_vif *wlvif,
+ {
+ 	int hwq = wlcore_tx_get_mac80211_queue(wlvif, queue);
+ 
+-	assert_spin_locked(&wl->wl_lock);
++	assert_raw_spin_locked(&wl->wl_lock);
+ 	return !!wl->queue_stop_reasons[hwq];
+ }
+diff --git a/drivers/net/wireless/ti/wlcore/wlcore.h b/drivers/net/wireless/ti/wlcore/wlcore.h
+index 06efc12..2d2307a 100644
+--- a/drivers/net/wireless/ti/wlcore/wlcore.h
++++ b/drivers/net/wireless/ti/wlcore/wlcore.h
+@@ -186,7 +186,7 @@ struct wl1271 {
+ 
+ 	int irq;
+ 
+-	spinlock_t wl_lock;
++	raw_spinlock_t wl_lock;
+ 
+ 	enum wlcore_state state;
+ 	enum wl12xx_fw_type fw_type;
 diff --git a/include/linux/ti_wilink_st.h b/include/linux/ti_wilink_st.h
 index 39e577c..b7bd20be 100644
 --- a/include/linux/ti_wilink_st.h
