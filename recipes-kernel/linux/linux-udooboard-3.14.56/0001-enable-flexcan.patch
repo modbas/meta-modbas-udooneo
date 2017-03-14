@@ -1,15 +1,15 @@
-From f6c0492db9108ed1b5b8806cdc352f641e603dec Mon Sep 17 00:00:00 2001
+From f89ff7ccfa4f639bc65bdd3a159f61df67e34351 Mon Sep 17 00:00:00 2001
 From: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
-Date: Thu, 2 Mar 2017 11:10:38 +0100
-Subject: [PATCH] enable flexcan
+Date: Tue, 14 Mar 2017 09:55:37 +0100
+Subject: [PATCH] * gpio147
 
 Signed-off-by: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
 ---
- .../arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi | 32 +++++++++++-----------
- 1 file changed, 16 insertions(+), 16 deletions(-)
+ .../arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi | 33 +++++++++++-----------
+ 1 file changed, 17 insertions(+), 16 deletions(-)
 
 diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
-index 6225aa7..9a28218 100644
+index 6225aa7..ad411aa 100644
 --- a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
 +++ b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
 @@ -17,8 +17,8 @@
@@ -23,7 +23,7 @@ index 6225aa7..9a28218 100644
  				MX6SX_PAD_SD4_RESET_B__GPIO6_IO_22		0x80000000	// {{external-gpio-22}}
  				MX6SX_PAD_CSI_PIXCLK__GPIO1_IO_24		0x80000000	// {{external-gpio-23}}	
  						
-@@ -33,21 +33,21 @@
+@@ -33,21 +33,22 @@
  				MX6SX_PAD_CSI_DATA06__GPIO1_IO_20		0x80000000	// {{external-gpio-32}}
  				MX6SX_PAD_CSI_DATA07__GPIO1_IO_21		0x80000000	// {{external-gpio-33}}
  				
@@ -52,10 +52,11 @@ index 6225aa7..9a28218 100644
 -				//MX6SX_PAD_GPIO1_IO04__GPIO1_IO_4		0x80000000	// {{external-gpio-47}}
 + 				MX6SX_PAD_GPIO1_IO05__GPIO1_IO_5		0x80000000	// {{external-gpio-46}}
 +				MX6SX_PAD_GPIO1_IO04__GPIO1_IO_4		0x80000000	// {{external-gpio-47}}
++				MX6SX_PAD_RGMII2_TD1__GPIO5_IO_19		0x80000000	// {{internal-gpio-11}} 
  			>;
  		};
  
-@@ -166,13 +166,13 @@
+@@ -166,13 +167,13 @@
  	cs-gpios = <&gpio6 14 0>;
  	pinctrl-names = "default";
  	pinctrl-0 = <&pinctrl_ecspi2>;
@@ -71,7 +72,7 @@ index 6225aa7..9a28218 100644
  };
  
  &uart2 {
-@@ -199,13 +199,13 @@
+@@ -199,13 +200,13 @@
  &flexcan1 {
  	pinctrl-names = "default";
  	pinctrl-0 = <&pinctrl_flexcan1>;
