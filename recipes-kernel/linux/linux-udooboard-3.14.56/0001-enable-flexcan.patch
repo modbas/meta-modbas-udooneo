@@ -1,15 +1,16 @@
-From f89ff7ccfa4f639bc65bdd3a159f61df67e34351 Mon Sep 17 00:00:00 2001
+From 82710693ca7fbbe072429b7fc222e240fe5a3e3c Mon Sep 17 00:00:00 2001
 From: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
-Date: Tue, 14 Mar 2017 09:55:37 +0100
-Subject: [PATCH] * gpio147
+Date: Thu, 23 Mar 2017 10:58:54 +0100
+Subject: [PATCH] * enable flexcan
 
 Signed-off-by: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
 ---
- .../arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi | 33 +++++++++++-----------
- 1 file changed, 17 insertions(+), 16 deletions(-)
+ .../arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi | 49 +++++++++++++++-------
+ arch/arm/boot/dts/imx6sx-udoo-neo.dtsi             |  6 +++
+ 2 files changed, 39 insertions(+), 16 deletions(-)
 
 diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
-index 6225aa7..ad411aa 100644
+index 6225aa7..d31700c 100644
 --- a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
 +++ b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
 @@ -17,8 +17,8 @@
@@ -52,16 +53,39 @@ index 6225aa7..ad411aa 100644
 -				//MX6SX_PAD_GPIO1_IO04__GPIO1_IO_4		0x80000000	// {{external-gpio-47}}
 + 				MX6SX_PAD_GPIO1_IO05__GPIO1_IO_5		0x80000000	// {{external-gpio-46}}
 +				MX6SX_PAD_GPIO1_IO04__GPIO1_IO_4		0x80000000	// {{external-gpio-47}}
-+				MX6SX_PAD_RGMII2_TD1__GPIO5_IO_19		0x80000000	// {{internal-gpio-11}} 
++// MCP CAN Interrupt    	MX6SX_PAD_RGMII2_TD1__GPIO5_IO_19		0x80000000	// {{internal-gpio-11}} 
  			>;
  		};
  
-@@ -166,13 +167,13 @@
+@@ -142,6 +143,12 @@
+ 			>;
+ 		};
+ 
++		pinctrl_mcpcan1: mcpcan1grp {
++			fsl,pins = <
++				MX6SX_PAD_RGMII2_TD1__GPIO5_IO_19	0x80000000
++			>;
++		};
++
+ 		pinctrl_spdif: spdifgrp {
+ 			fsl,pins = <
+ 				MX6SX_PAD_CSI_DATA04__SPDIF_OUT		0x1b0b0
+@@ -166,13 +173,23 @@
  	cs-gpios = <&gpio6 14 0>;
  	pinctrl-names = "default";
  	pinctrl-0 = <&pinctrl_ecspi2>;
 -	status = "disabled";
 +	status = "okay";
++        can2: mcp2515@0 {
++                reg = <0>;
++                compatible = "microchip,mcp2515";
++                pinctrl-names = "default";
++                pinctrl-0 = <&pinctrl_mcpcan1>;
++                spi-max-frequency = <10000000>;
++                interrupt-parent = <&gpio5>;
++                interrupts = <19 0x2>;
++                clocks = <&mcpcan1_osc>;
++        };
  };
  
  &uart1 {
@@ -72,7 +96,7 @@ index 6225aa7..ad411aa 100644
  };
  
  &uart2 {
-@@ -199,13 +200,13 @@
+@@ -199,13 +216,13 @@
  &flexcan1 {
  	pinctrl-names = "default";
  	pinctrl-0 = <&pinctrl_flexcan1>;
@@ -88,6 +112,23 @@ index 6225aa7..ad411aa 100644
  };
  
  &spdif {
+diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
+index 1a7a45e..d4ad255 100644
+--- a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
++++ b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
+@@ -25,6 +25,12 @@
+ 		status = "disabled";
+ 	};
+ 
++	mcpcan1_osc: mcpcan1_osc {
++                compatible = "fixed-clock";
++                #clock-cells = <0>;
++                clock-frequency  = <16000000>;
++        };
++
+ 	regulators {
+ 		compatible = "simple-bus";
+ 
 -- 
 1.9.1
 
