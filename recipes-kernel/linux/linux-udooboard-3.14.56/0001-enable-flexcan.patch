@@ -1,16 +1,16 @@
-From 82710693ca7fbbe072429b7fc222e240fe5a3e3c Mon Sep 17 00:00:00 2001
+From 456ee30410f94677590ccab53a99cbcec4cd5229 Mon Sep 17 00:00:00 2001
 From: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
-Date: Thu, 23 Mar 2017 10:58:54 +0100
+Date: Thu, 20 Jul 2017 11:56:36 +0200
 Subject: [PATCH] * enable flexcan
 
 Signed-off-by: Frank Traenkle <frank.traenkle@hs-heilbronn.de>
 ---
- .../arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi | 49 +++++++++++++++-------
+ .../arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi | 53 ++++++++++++++--------
  arch/arm/boot/dts/imx6sx-udoo-neo.dtsi             |  6 +++
- 2 files changed, 39 insertions(+), 16 deletions(-)
+ 2 files changed, 41 insertions(+), 18 deletions(-)
 
 diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
-index 6225aa7..d31700c 100644
+index 6225aa7..9a8aba7 100644
 --- a/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
 +++ b/arch/arm/boot/dts/imx6sx-udoo-neo-externalpins.dtsi
 @@ -17,8 +17,8 @@
@@ -30,8 +30,8 @@ index 6225aa7..d31700c 100644
  				
 -				//MX6SX_PAD_USB_H_STROBE__GPIO7_IO_11	0x80000000	// {{external-gpio-34}}
 -				//MX6SX_PAD_USB_H_DATA__GPIO7_IO_10		0x80000000	// {{external-gpio-35}}
-+// 				MX6SX_PAD_USB_H_STROBE__GPIO7_IO_11	0x80000000	// {{external-gpio-34}}
-+// 				MX6SX_PAD_USB_H_DATA__GPIO7_IO_10		0x80000000	// {{external-gpio-35}}
++ 				MX6SX_PAD_USB_H_STROBE__PWM1_OUT		0x80000000	// {{external-gpio-34}}
++ 				MX6SX_PAD_USB_H_DATA__PWM2_OUT			0x80000000	// {{external-gpio-35}}
  				MX6SX_PAD_SD4_DATA3__GPIO6_IO_17		0x80000000	// {{external-gpio-36}}
  				MX6SX_PAD_SD4_DATA2__GPIO6_IO_16		0x80000000	// {{external-gpio-37}}
 -				MX6SX_PAD_SD4_DATA1__GPIO6_IO_15		0x80000000	// {{external-gpio-38}}
@@ -112,6 +112,22 @@ index 6225aa7..d31700c 100644
  };
  
  &spdif {
+@@ -217,13 +234,13 @@
+ &pwm1 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_pwm1>;
+-	status = "disabled";
++	status = "okay";
+ };
+ 
+ &pwm2 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&pinctrl_pwm2>;
+-	status = "disabled";
++	status = "okay";
+ };
+ 
+ &pwm3 {
 diff --git a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi b/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
 index 1a7a45e..d4ad255 100644
 --- a/arch/arm/boot/dts/imx6sx-udoo-neo.dtsi
